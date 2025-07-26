@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🤖 AI Social Media Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .status {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        
+        textarea {
+            min-height: 100px;
+        }
+        
+        .platforms {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .platform {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .platform input {
+            margin-right: 8px;
+        }
+        
+        .platform.checked {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI Social Media Assistant</h1>
+        
+        <div class="status">
+            <strong>✅ Status:</strong> Connected to n8n.sbeverse.com<br>
+            <strong>🔗 Webhook:</strong> /webhook-test/social-upload<br>
+            <strong>📱 Ready to:</strong> Upload → AI Enhance → Approve → Auto-Post
+        </div>
+        
+        <form id="assistantForm">
+            <div class="form-group">
+                <label for="message">✍️ Your Message</label>
+                <textarea 
+                    id="message" 
+                    name="message" 
+                    placeholder="Write your message here... AI will enhance it for maximum engagement! 🚀"
+                    required
+                >Testing my AI social media assistant! This workflow is working perfectly! 🎉</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="platforms">🎯 Target Platforms (comma separated)</label>
+                <input 
+                    type="text" 
+                    id="platforms" 
+                    name="platforms" 
+                    value="Instagram,TikTok,LinkedIn,YouTube"
+                    placeholder="Instagram,TikTok,LinkedIn,YouTube"
+                >
+            </div>
+            
+            <div class="form-group">
+                <label>🎯 Quick Platform Selection</label>
+                <div class="platforms">
+                    <label class="platform">
+                        <input type="checkbox" value="Instagram" checked> 📷 Instagram
+                    </label>
+                    <label class="platform">
+                        <input type="checkbox" value="TikTok" checked> 🎵 TikTok
+                    </label>
+                    <label class="platform">
+                        <input type="checkbox" value="LinkedIn" checked> 💼 LinkedIn
+                    </label>
+                    <label class="platform">
+                        <input type="checkbox" value="YouTube" checked> 📺 YouTube
+                    </label>
+                </div>
+            </div>
+            
+            <button type="submit" id="submitBtn">🚀 Send to AI Assistant</button>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                Sending to AI assistant...
+            </div>
+            
+            <div class="result" id="result"></div>
+        </form>
+    </div>
+
+    <script>
+        const WEBHOOK_URL = 'https://n8n.sbeverse.com/webhook-test/social-upload';
+        
+        // Platform checkboxes update text input
+        document.querySelectorAll('.platform input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const checkedPlatforms = Array.from(document.querySelectorAll('.platform input[type="checkbox"]:checked'))
+                    .map(cb => cb.value);
+                document.getElementById('platforms').value = checkedPlatforms.join(',');
+                
+                // Update visual state
+                this.closest('.platform').classList.toggle('checked', this.checked);
+            });
+            
+            // Initial state
+            if (checkbox.checked) {
+                checkbox.closest('.platform').classList.add('checked');
+            }
+        });
+        
+        // Form submission
+        document.getElementById('assistantForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+            
+            // Show loading
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            try {
+                const formData = new FormData();
+                formData.append('message', document.getElementById('message').value);
+                formData.append('platforms', document.getElementById('platforms').value);
+                
+                console.log('Sending to:', WEBHOOK_URL);
+                console.log('Data:', Object.fromEntries(formData));
+                
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                console.log('Response:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        ✅ <strong>Success!</strong> Your content has been sent to the AI assistant.<br>
+                        🤖 <strong>Next Step:</strong> Check your Telegram for the approval message!<br>
+                        📱 <strong>Expected:</strong> You'll get an enhanced version to approve/reject.<br>
+                        <small><strong>Tip:</strong> Check your n8n execution logs to see the workflow progress!</small>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                result.className = 'result error';
+                result.innerHTML = `
+                    ❌ <strong>Error:</strong> ${error.message}<br>
+                    <small>Check the browser console (F12) for more details.</small>
+                `;
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+                result.style.display = 'block';
+            }
+        });
+        
+        console.log('🤖 AI Assistant Ready!');
+        console.log('📡 Webhook URL:', WEBHOOK_URL);
+    </script>
+</body>
+</html>
